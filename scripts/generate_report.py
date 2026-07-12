@@ -20,6 +20,13 @@ BUILDING_NAME = "國揚鉑御"
 CITY_TITLE = "高雄市 國揚鉑御社區實價控表"
 FLOOR_MIN, FLOOR_MAX = 2, 20
 
+# A3 landscape = 420 x 297mm. #content is scaled to fit inside this box
+# (see render_pdf.py) so the report is always exactly one page.
+PAGE_WIDTH_MM, PAGE_HEIGHT_MM = 420, 297
+PAGE_MARGIN_MM = 10
+PAGE_CONTENT_WIDTH_MM = PAGE_WIDTH_MM - 2 * PAGE_MARGIN_MM
+PAGE_CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - 2 * PAGE_MARGIN_MM
+
 TIER_HIGH = (70.0, float("inf"), "#fde3e0", "#c0392b", "70\n萬以上")
 TIER_MID = (65.0, 69.9999, "#fbe6cf", "#c07a1e", "65-\n69.99萬")
 TIER_LOW = (60.0, 64.9999, "#e2ecfa", "#1f5fa8", "60-\n64.99萬")
@@ -113,12 +120,26 @@ def build_html(records):
     return f"""<title>{CITY_TITLE}</title>
 <style>
   * {{ box-sizing: border-box; }}
+  html, body {{
+    margin: 0;
+    background: #ffffff;
+  }}
   body {{
     font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
-    margin: 0;
-    padding: 28px 32px;
-    background: #ffffff;
     color: #1c2733;
+  }}
+  /* Fixed to the printable content box (A3 landscape minus @page margin).
+     #content is scaled down (never up) by render_pdf.py so the whole
+     report always lands on a single page, however many rows/columns. */
+  #sheet {{
+    width: {PAGE_CONTENT_WIDTH_MM}mm;
+    height: {PAGE_CONTENT_HEIGHT_MM}mm;
+    overflow: hidden;
+    position: relative;
+  }}
+  #content {{
+    padding: 20px 28px;
+    transform-origin: top left;
   }}
   h1 {{
     font-size: 30px;
@@ -174,8 +195,9 @@ def build_html(records):
   td .price {{ font-size: 13px; font-weight: 700; }}
   td .unitprice {{ font-size: 13px; font-weight: 700; }}
   td .note {{ font-size: 9px; opacity: 0.85; }}
-  @page {{ size: A3 landscape; margin: 10mm; }}
+  @page {{ size: A3 landscape; margin: {PAGE_MARGIN_MM}mm; }}
 </style>
+<div id="sheet"><div id="content">
 <h1>{CITY_TITLE}</h1>
 <div class="subtitle">更新日期：{update_month} | 單位：萬元/坪 | 規格：A3單頁滿版大字對齊制 ({FLOOR_MIN}-{FLOOR_MAX}F全樓層版)</div>
 <div class="stats">
@@ -192,6 +214,7 @@ def build_html(records):
     {''.join(body_rows)}
   </tbody>
 </table>
+</div></div>
 """
 
 
