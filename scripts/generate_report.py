@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Generate the 國揚鉑御 樓層/單價 實價登錄 對照表 (HTML, A3 landscape) from the
-raw 實價登錄 Excel export.
+"""Generate the 國揚鉑御 樓層/單價 實價登錄 對照表 (HTML, single A3 page) from the
+raw 實價登錄 Excel export. Page orientation is set in report_config.py.
 
 Usage:
     python3 scripts/generate_report.py [xlsx_path] [html_out]
@@ -12,6 +12,13 @@ from pathlib import Path
 
 import openpyxl
 
+from report_config import (
+    ORIENTATION,
+    PAGE_CONTENT_HEIGHT_MM,
+    PAGE_CONTENT_WIDTH_MM,
+    PAGE_MARGIN_MM,
+)
+
 ROOT = Path(__file__).resolve().parent.parent
 XLSX_PATH = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "guoyang_boyu_實價登錄.xlsx"
 HTML_OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "output" / "guoyang_report.html"
@@ -20,12 +27,14 @@ BUILDING_NAME = "國揚鉑御"
 CITY_TITLE = "高雄市 國揚鉑御社區實價控表"
 FLOOR_MIN, FLOOR_MAX = 2, 20
 
-# A3 landscape = 420 x 297mm. #content is scaled to fit inside this box
-# (see render_pdf.py) so the report is always exactly one page.
-PAGE_WIDTH_MM, PAGE_HEIGHT_MM = 420, 297
-PAGE_MARGIN_MM = 10
-PAGE_CONTENT_WIDTH_MM = PAGE_WIDTH_MM - 2 * PAGE_MARGIN_MM
-PAGE_CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - 2 * PAGE_MARGIN_MM
+# #content has a fixed intrinsic design size (roughly matching the target
+# page's aspect ratio) and every floor row gets the same explicit height,
+# so the grid is perfectly uniform. render_pdf.py then measures this
+# intrinsic box and scales it (up or down) to exactly fill one printable
+# page, however many rows/columns end up in the table.
+CONTENT_WIDTH_PX = 820
+ROW_HEIGHT_PX = 52
+THEAD_HEIGHT_PX = 40
 
 TIER_HIGH = (70.0, float("inf"), "#fde3e0", "#c0392b", "70\n萬以上")
 TIER_MID = (65.0, 69.9999, "#fbe6cf", "#c07a1e", "65-\n69.99萬")
@@ -117,6 +126,8 @@ def build_html(records):
         for _, _, bg, _fg, label in TIERS
     )
 
+    orientation_label = "直式" if ORIENTATION == "portrait" else "橫式"
+
     return f"""<title>{CITY_TITLE}</title>
 <style>
   * {{ box-sizing: border-box; }}
@@ -128,9 +139,11 @@ def build_html(records):
     font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
     color: #1c2733;
   }}
-  /* Fixed to the printable content box (A3 landscape minus @page margin).
-     #content is scaled down (never up) by render_pdf.py so the whole
-     report always lands on a single page, however many rows/columns. */
+  /* Fixed to the printable page box (A3 {ORIENTATION} minus @page margin).
+     #content has its own fixed intrinsic size below; render_pdf.py measures
+     it and scales it (up or down, preserving aspect ratio) to fill this
+     box exactly, so the report always lands on a single page no matter
+     how many rows/columns it ends up with. */
   #sheet {{
     width: {PAGE_CONTENT_WIDTH_MM}mm;
     height: {PAGE_CONTENT_HEIGHT_MM}mm;
@@ -138,37 +151,43 @@ def build_html(records):
     position: relative;
   }}
   #content {{
-    padding: 20px 28px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: {CONTENT_WIDTH_PX}px;
+    padding: 16px 20px;
     transform-origin: top left;
   }}
   h1 {{
-    font-size: 30px;
-    margin: 0 0 4px;
+    font-size: 22px;
+    margin: 0 0 2px;
     text-align: center;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
   }}
   .subtitle {{
     text-align: center;
     color: #6b7684;
-    font-size: 13px;
-    margin-bottom: 18px;
+    font-size: 9px;
+    margin-bottom: 10px;
   }}
   .stats {{
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
+    gap: 6px 14px;
     background: #f4f6f8;
-    border-radius: 10px;
-    padding: 14px 24px;
-    margin-bottom: 18px;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 10px;
   }}
   .stat {{ text-align: left; }}
-  .stat .label {{ font-size: 12px; color: #6b7684; }}
-  .stat .value {{ font-size: 20px; font-weight: 700; color: #1c2733; }}
+  .stat .label {{ font-size: 8px; color: #6b7684; }}
+  .stat .value {{ font-size: 14px; font-weight: 700; color: #1c2733; }}
   .stat .value.accent {{ color: #c0392b; }}
-  .legend {{ display: flex; align-items: center; gap: 8px; font-size: 12px; color: #33475b; }}
-  .swatch {{ display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-left: 10px; }}
-  .legend-label {{ white-space: pre-line; line-height: 1.1; }}
+  .legend {{ display: flex; align-items: center; gap: 4px; font-size: 8px; color: #33475b; }}
+  .swatch {{ display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-left: 6px; }}
+  .legend-label {{ white-space: pre-line; line-height: 1.05; }}
   table {{
     width: 100%;
     border-collapse: collapse;
@@ -177,29 +196,34 @@ def build_html(records):
   th, td {{
     border: 1px solid #dbe1e8;
     text-align: center;
-    padding: 4px 2px;
+    padding: 1px;
   }}
   thead th {{
     background: #24344a;
     color: #ffffff;
-    font-size: 14px;
-    padding: 8px 2px;
+    font-size: 10px;
+    height: {THEAD_HEIGHT_PX}px;
   }}
   th.floor {{
     background: #24344a;
     color: #ffffff;
-    width: 52px;
-    font-size: 13px;
+    width: 42px;
+    font-size: 9px;
   }}
-  td.empty {{ color: #c3cad2; background: #fafbfc; }}
-  td .price {{ font-size: 13px; font-weight: 700; }}
-  td .unitprice {{ font-size: 13px; font-weight: 700; }}
-  td .note {{ font-size: 9px; opacity: 0.85; }}
-  @page {{ size: A3 landscape; margin: {PAGE_MARGIN_MM}mm; }}
+  /* Every floor row and every cell in it shares the same explicit height,
+     so the grid reads as a perfectly even set of boxes regardless of
+     whether a cell has 3 lines of data or is empty. */
+  tbody tr {{ height: {ROW_HEIGHT_PX}px; }}
+  tbody td, tbody th.floor {{ height: {ROW_HEIGHT_PX}px; vertical-align: middle; }}
+  td.empty {{ color: #c3cad2; background: #fafbfc; font-size: 10px; }}
+  td .price {{ font-size: 10px; font-weight: 700; white-space: nowrap; line-height: 1.2; }}
+  td .unitprice {{ font-size: 10px; font-weight: 700; white-space: nowrap; line-height: 1.2; }}
+  td .note {{ font-size: 6.5px; opacity: 0.85; white-space: nowrap; line-height: 1.2; }}
+  @page {{ size: A3 {ORIENTATION}; margin: {PAGE_MARGIN_MM}mm; }}
 </style>
 <div id="sheet"><div id="content">
 <h1>{CITY_TITLE}</h1>
-<div class="subtitle">更新日期：{update_month} | 單位：萬元/坪 | 規格：A3單頁滿版大字對齊制 ({FLOOR_MIN}-{FLOOR_MAX}F全樓層版)</div>
+<div class="subtitle">更新日期：{update_month} | 單位：萬元/坪 | 規格：A3單頁滿版・列高一致 ({orientation_label}，{FLOOR_MIN}-{FLOOR_MAX}F全樓層版)</div>
 <div class="stats">
   <div class="stat"><div class="label">成交戶數</div><div class="value accent">{count} 戶</div></div>
   <div class="stat"><div class="label">最高單價</div><div class="value accent">{max_price:.2f} 萬/坪</div></div>
