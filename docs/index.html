@@ -5,7 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>友眾16青砥 合約審閱本</title>
 <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
+  <script>
+new QRCode(document.getElementById("qrcode"), {
+    text: "https://youzhong16-contract.pages.dev/",
+    width: 220,
+    height: 220,
+    colorDark : "#6b4525",
+    colorLight : "#ffffff",
+    correctLevel : QRCode.CorrectLevel.H
+});
+</script>
 <body>
 <div class="topbar">
   <span></span>
@@ -28,10 +39,10 @@
     <div class="desc">房屋與停車位標示、建材設備表、開工與交屋期限、保固範圍、貸款約定、違約處罰等全部條款及附件</div>
   </a>
 
-  <div class="qr-box">
-    <img src="assets/qrcode.png" alt="掃描以開啟合約審閱本">
-    <p>掃描 QR Code 隨時開啟本審閱本</p>
-  </div>
+ <div class="qr-box">
+  <div id="qrcode"></div>
+  <p>掃描 QR Code 隨時開啟本審閱本</p>
+</div>
 </main>
 <footer class="page-end">
   本頁為合約審閱電子版，僅供買方審閱參考，正式簽約以紙本契約書為準。
