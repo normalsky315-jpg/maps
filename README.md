@@ -4,7 +4,7 @@
 
 ## 內容
 
-- `docs/index.html` — 審閱本首頁（含 QR Code）
+- `docs/index.html` — 審閱本首頁（頁面載入時以 JS 動態產生 QR Code，內容為目前網站網址）
 - `docs/land-contract.html` — 預定土地買賣契約書全文
 - `docs/house-contract.html` — 預定房屋買賣契約書全文（含全部附件）
 - `docs/assets/qrcode.png` — 頁面內嵌用 QR Code
