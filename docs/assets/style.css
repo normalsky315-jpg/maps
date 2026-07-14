@@ -152,6 +152,19 @@ p.sign-line {
   font-weight: 600;
 }
 
+.floorplan {
+  margin: 14px 0 22px;
+  text-align: center;
+}
+
+.floorplan img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
 .table-wrap {
   overflow-x: auto;
   margin: 14px 0;
