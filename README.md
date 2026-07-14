@@ -12,10 +12,12 @@
 
 合約內容為契約範本原文逐條轉錄，未填寫之空白欄位（金額、日期、坪數等）維持原樣，供實際簽約時手寫填入；正式簽約仍以紙本契約書為準。
 
-## 線上瀏覽（Cloudflare Pages）
+## 線上瀏覽（GitHub Pages）
 
-本站已透過 Cloudflare Pages 部署，Production branch 為 `main`，Build output directory 為 `docs`，每次 push 到 `main` 都會自動重新部署。
+本站已透過 GitHub Pages 部署（Settings → Pages → Deploy from a branch → `main` / `/docs`），每次 push 到 `main` 都會自動重新部署，不依賴第三方平台的 Git 連線設定。
 
-網址：**https://youzhong16-contract.pages.dev/**
+網址：**https://normalsky315-jpg.github.io/maps/**
 
-`docs/assets/qrcode.png` 與 `qrcode-print.png` 皆已指向這個網址，客人掃描即可直接開啟合約。若之後改用自己的網域，重新產生 QR Code 指向新網址即可。
+`docs/index.html` 首頁的 QR Code 是頁面載入時以 JS 動態產生，內容固定為「目前網站網址」，換網域也不用手動更新。`docs/assets/qrcode.png` 與 `qrcode-print.png` 則是給列印或單獨分享用的靜態圖檔，已指向上述網址。
+
+（先前曾嘗試 Cloudflare Pages，但該專案的 GitHub 連線多次中斷導致部署卡在舊版本，故改回 GitHub Pages。）
