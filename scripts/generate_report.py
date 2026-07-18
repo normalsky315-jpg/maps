@@ -28,13 +28,22 @@ BUILDING_NAME = "國揚鉑御"
 CITY_TITLE = "高雄市 國揚鉑御社區實價控表"
 FLOOR_MIN, FLOOR_MAX = 2, 20
 
+# Full per-floor unit roster (from the 鼓山區國揚鉑御 戶型配置圖: A棟 skips A4/A14,
+# B棟 skips B4 — no such units exist). Every column appears even if it has
+# zero transactions, so unsold units (e.g. B2) still show up as an all-"—"
+# column instead of being silently omitted.
+FULL_UNITS = [
+    "A1", "A2", "A3", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A15", "A16",
+    "B1", "B2", "B3", "B5", "B6", "B7", "B8", "B9",
+]
+
 # #content has a fixed intrinsic design size (roughly matching the target
 # page's aspect ratio) and every floor row gets the same explicit height,
 # so the grid is perfectly uniform. render_pdf.py then measures this
 # intrinsic box and scales it (up or down) to exactly fill one printable
 # page, however many rows/columns end up in the table.
-CONTENT_WIDTH_PX = 1400
-ROW_HEIGHT_PX = 42
+CONTENT_WIDTH_PX = 1970
+ROW_HEIGHT_PX = 63
 THEAD_HEIGHT_PX = 34
 AREA_ROW_HEIGHT_PX = 26
 
@@ -116,7 +125,7 @@ def area_stats(records):
 
 
 def build_html(records):
-    columns = sorted({r["col"] for r in records}, key=column_sort_key)
+    columns = sorted(set(FULL_UNITS) | {r["col"] for r in records}, key=column_sort_key)
     grid = {(r["col"], r["floor"]): r for r in records}
     col_area = area_stats(records)
 
@@ -132,6 +141,8 @@ def build_html(records):
     area_cells = "".join(
         f'<th class="area-cell{" area-flag" if col_area[c]["spread"] > AREA_SPREAD_TOLERANCE else ""}">'
         f'{col_area[c]["standard"]:.2f}坪</th>'
+        if c in col_area
+        else '<th class="area-cell area-unsold">未成交</th>'
         for c in columns
     )
 
@@ -251,6 +262,11 @@ def build_html(records):
     background: #5c2430;
     color: #ff8a80;
     font-weight: 700;
+  }}
+  th.area-unsold {{
+    color: #7c8998;
+    font-style: italic;
+    font-weight: 400;
   }}
   th.corner {{
     background: #24344a;
