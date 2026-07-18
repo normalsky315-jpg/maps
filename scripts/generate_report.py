@@ -37,6 +37,19 @@ FULL_UNITS = [
     "B1", "B2", "B3", "B5", "B6", "B7", "B8", "B9",
 ]
 
+# 從建案官方戶型規劃圖(FLOOR PLANNING)抄錄的標準坪數，只用來補「從未成交、
+# 實價登錄沒有任何紀錄」的戶別 —— 已有成交紀錄的戶別一律以 area_stats() 算出
+# 的實際登錄坪數為準（兩者基準可能不同：規劃圖坪數通常不含車位面積，登錄
+# 坪數則是該筆交易「房地+車位」的總面積，若有配車位通常會大個幾坪)。
+# A棟3R戶型（A1、A7）官方表僅標示「41-42.5坪」區間、圖上又只清楚標出角間
+# A8的42.5坪，A1/A7無法判斷是41或42.5哪一個，因此原樣保留區間文字。
+SPEC_AREA = {
+    "A2": 23.00, "A3": 23.00, "A5": 23.00, "A6": 23.00, "A11": 23.00,  # 1+1R，圖上標示23P
+    "A1": "41-42.5", "A7": "41-42.5",  # 3R，區間無法細分至單一戶別
+    "B2": 21.50, "B3": 21.50, "B5": 21.50,  # 1+1R，圖上標示21.5P
+    "B8": 37.00,  # 3R，四個角間圖上均標示37P
+}
+
 # #content has a fixed intrinsic design size (roughly matching the target
 # page's aspect ratio) and every floor row gets the same explicit height,
 # so the grid is perfectly uniform. render_pdf.py then measures this
@@ -124,6 +137,22 @@ def area_stats(records):
     return stats
 
 
+def area_cell_html(col, col_area):
+    """The 坪數 header cell for one column: actual registry data takes
+    priority; a never-sold column falls back to the official spec sheet
+    (SPEC_AREA), and only shows 未成交 if neither is available."""
+    if col in col_area:
+        flagged = col_area[col]["spread"] > AREA_SPREAD_TOLERANCE
+        cls = "area-cell area-flag" if flagged else "area-cell"
+        return f'<th class="{cls}">{col_area[col]["standard"]:.2f}坪</th>'
+    spec = SPEC_AREA.get(col)
+    if isinstance(spec, float):
+        return f'<th class="area-cell area-spec">{spec:.2f}坪</th>'
+    if isinstance(spec, str):
+        return f'<th class="area-cell area-spec">{spec}坪</th>'
+    return '<th class="area-cell area-unsold">未成交</th>'
+
+
 def build_html(records):
     columns = sorted(set(FULL_UNITS) | {r["col"] for r in records}, key=column_sort_key)
     grid = {(r["col"], r["floor"]): r for r in records}
@@ -138,13 +167,7 @@ def build_html(records):
     update_month = date.today().strftime("%Y/%m")
 
     head_cells = "".join(f"<th>{c}</th>" for c in columns)
-    area_cells = "".join(
-        f'<th class="area-cell{" area-flag" if col_area[c]["spread"] > AREA_SPREAD_TOLERANCE else ""}">'
-        f'{col_area[c]["standard"]:.2f}坪</th>'
-        if c in col_area
-        else '<th class="area-cell area-unsold">未成交</th>'
-        for c in columns
-    )
+    area_cells = "".join(area_cell_html(c, col_area) for c in columns)
 
     body_rows = []
     for floor in range(FLOOR_MAX, FLOOR_MIN - 1, -1):
@@ -265,6 +288,14 @@ def build_html(records):
   }}
   th.area-unsold {{
     color: #7c8998;
+    font-style: italic;
+    font-weight: 400;
+  }}
+  /* Never-sold column, filled from the developer's official 戶型規劃圖
+     spec sheet rather than 實價登錄 — visually distinct (teal, italic)
+     from the white mode-of-actual-transactions cells. */
+  th.area-spec {{
+    color: #8fd6c9;
     font-style: italic;
     font-weight: 400;
   }}
