@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-Hant">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>友眾16青砥 合約審閱本</title>
+
+<link rel="stylesheet" href="assets/style.css">
+
+<!-- QR Code產生套件 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+</head> 
+
+
+<body>
+
+<div class="topbar">
+  <span></span>
+  <span class="case-name">友眾16青砥</span>
+</div>
+
+
+<main>
+
+  <h1>合約審閱本</h1>
+
+
+  <div class="review-banner">
+
+    歡迎審閱「友眾16青砥」預售屋買賣契約
+
+    <small>
+      依消費者保護法規定，契約審閱期間至少五日，請於審閱期間內詳閱以下契約全文。
+    </small>
+
+  </div>
+
+
+
+  <a class="home-card" href="land-contract.html">
+
+    <div class="title">
+      預定土地買賣契約書
+    </div>
+
+    <div class="desc">
+      土地標示、面積找補、履約保證機制、付款與貸款條件、稅費負擔、違約處罰等全部條款
+    </div>
+
+  </a>
+
+
+
+
+  <a class="home-card" href="house-contract.html">
+
+    <div class="title">
+      預定房屋買賣契約書
+    </div>
+
+    <div class="desc">
+      房屋與停車位標示、建材設備表、開工與交屋期限、保固範圍、貸款約定、違約處罰等全部條款及附件
+    </div>
+
+  </a>
+
+
+
+
+  <!-- QR Code區域 -->
+
+  <div class="qr-box">
+
+    <div id="qrcode"></div>
+
+    <p>
+      掃描 QR Code 隨時開啟本審閱本
+    </p>
+
+  </div>
+
+
+</main>
+
+
+
+<footer class="page-end">
+
+本頁為合約審閱電子版，僅供買方審閱參考，正式簽約以紙本契約書為準。
+
+</footer>
+
+
+
+
+<!-- QR Code產生 -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+
+    new QRCode(document.getElementById("qrcode"), {
+
+        text: window.location.href,
+
+        width: 220,
+
+        height: 220,
+
+        colorDark: "#146a85",
+
+        colorLight: "#ffffff",
+
+        correctLevel: QRCode.CorrectLevel.H
+
+    });
+
+
+});
+
+
+</script>
+
+
+
+</body>
+
+</html>
