@@ -7,6 +7,7 @@ Usage:
 """
 import re
 import sys
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -32,9 +33,15 @@ FLOOR_MIN, FLOOR_MAX = 2, 20
 # so the grid is perfectly uniform. render_pdf.py then measures this
 # intrinsic box and scales it (up or down) to exactly fill one printable
 # page, however many rows/columns end up in the table.
-CONTENT_WIDTH_PX = 820
-ROW_HEIGHT_PX = 52
-THEAD_HEIGHT_PX = 44
+CONTENT_WIDTH_PX = 1400
+ROW_HEIGHT_PX = 42
+THEAD_HEIGHT_PX = 34
+AREA_ROW_HEIGHT_PX = 26
+
+# A unit column's 坪數 row shows its single most common (mode) 總面積.
+# Columns whose recorded area actually spreads by more than this get
+# called out separately (see main()) instead of silently averaged away.
+AREA_SPREAD_TOLERANCE = 0.1
 
 TIER_HIGH = (70.0, float("inf"), "#fde3e0", "#c0392b", "70\n萬以上")
 TIER_MID = (65.0, 69.9999, "#fbe6cf", "#c07a1e", "65-\n69.99萬")
@@ -88,9 +95,30 @@ def tier_for(unit_price: float):
     return "#eef1f4", "#33475b"
 
 
+def area_stats(records):
+    """Per-column 標準坪數 (mode, ties broken toward the smaller value) plus
+    the full spread (max-min) so callers can flag columns that don't
+    actually share one consistent 坪數."""
+    by_col = {}
+    for r in records:
+        by_col.setdefault(r["col"], []).append(round(r["area"], 2))
+    stats = {}
+    for col, areas in by_col.items():
+        counts = Counter(areas)
+        top = max(counts.values())
+        standard = min(v for v, c in counts.items() if c == top)
+        stats[col] = {
+            "standard": standard,
+            "spread": max(areas) - min(areas),
+            "values": sorted(set(areas)),
+        }
+    return stats
+
+
 def build_html(records):
     columns = sorted({r["col"] for r in records}, key=column_sort_key)
     grid = {(r["col"], r["floor"]): r for r in records}
+    col_area = area_stats(records)
 
     count = len(records)
     max_price = max(r["unit_price"] for r in records)
@@ -100,18 +128,8 @@ def build_html(records):
 
     update_month = date.today().strftime("%Y/%m")
 
-    # A unit column whose every transaction shares the same 坪數 gets that
-    # figure hoisted up into the column header (once) instead of repeated
-    # in every cell's footnote.
-    areas_by_col = {}
-    for r in records:
-        areas_by_col.setdefault(r["col"], set()).add(round(r["area"], 2))
-    fixed_area = {col: next(iter(areas)) for col, areas in areas_by_col.items() if len(areas) == 1}
-
-    head_cells = "".join(
-        f'<th>{c}<span class="col-area">{fixed_area[c]:.2f}坪</span></th>' if c in fixed_area else f"<th>{c}</th>"
-        for c in columns
-    )
+    head_cells = "".join(f"<th>{c}</th>" for c in columns)
+    area_cells = "".join(f'<th class="area-cell">{col_area[c]["standard"]:.2f}坪</th>' for c in columns)
 
     body_rows = []
     for floor in range(FLOOR_MAX, FLOOR_MIN - 1, -1):
@@ -122,13 +140,12 @@ def build_html(records):
                 cells.append('<td class="empty">—</td>')
                 continue
             bg, fg = tier_for(rec["unit_price"])
-            parking = f'{rec["parking_price"]}萬' if rec["parking_price"] is not None else "無"
-            note = f"車{parking}" if col in fixed_area else f'{rec["area"]:.2f}坪/車{parking}'
+            parking = f'車{rec["parking_price"]}萬' if rec["parking_price"] is not None else "車無"
             cells.append(
                 f'<td style="background:{bg};color:{fg};">'
                 f'<div class="price">{rec["total_price"]:,}萬</div>'
                 f'<div class="unitprice">{rec["unit_price"]:.2f}萬</div>'
-                f'<div class="note">{note}</div>'
+                f'<div class="note">{parking}</div>'
                 f"</td>"
             )
         body_rows.append(f'<tr><th class="floor">{floor}F</th>{"".join(cells)}</tr>')
@@ -213,31 +230,36 @@ def build_html(records):
   thead th {{
     background: #24344a;
     color: #ffffff;
-    font-size: 10px;
+    font-size: 12px;
     height: {THEAD_HEIGHT_PX}px;
-    line-height: 1.3;
   }}
-  .col-area {{
-    display: block;
-    font-size: 7px;
+  th.area-cell {{
+    background: #3a4c66;
+    color: #cfd8e3;
+    font-size: 10px;
     font-weight: 400;
-    color: #a9b4c2;
+    height: {AREA_ROW_HEIGHT_PX}px;
+  }}
+  th.corner {{
+    background: #24344a;
+    color: #ffffff;
+    width: 46px;
   }}
   th.floor {{
     background: #24344a;
     color: #ffffff;
-    width: 42px;
-    font-size: 9px;
+    width: 46px;
+    font-size: 11px;
   }}
   /* Every floor row and every cell in it shares the same explicit height,
      so the grid reads as a perfectly even set of boxes regardless of
      whether a cell has 3 lines of data or is empty. */
   tbody tr {{ height: {ROW_HEIGHT_PX}px; }}
   tbody td, tbody th.floor {{ height: {ROW_HEIGHT_PX}px; vertical-align: middle; }}
-  td.empty {{ color: #c3cad2; background: #fafbfc; font-size: 10px; }}
-  td .price {{ font-size: 10px; font-weight: 700; white-space: nowrap; line-height: 1.2; }}
-  td .unitprice {{ font-size: 10px; font-weight: 700; white-space: nowrap; line-height: 1.2; }}
-  td .note {{ font-size: 6.5px; opacity: 0.85; white-space: nowrap; line-height: 1.2; }}
+  td.empty {{ color: #c3cad2; background: #fafbfc; font-size: 11px; }}
+  td .price {{ font-size: 12px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
+  td .unitprice {{ font-size: 12px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
+  td .note {{ font-size: 8px; opacity: 0.85; white-space: nowrap; line-height: 1.25; }}
   @page {{ size: A3 {ORIENTATION}; margin: {PAGE_MARGIN_MM}mm; }}
 </style>
 <div id="sheet"><div id="content">
@@ -252,7 +274,10 @@ def build_html(records):
   <div class="legend">單價級距：{legend_swatches}</div>
 </div>
 <table>
-  <thead><tr><th>樓層</th>{head_cells}</tr></thead>
+  <thead>
+    <tr><th class="corner">樓層</th>{head_cells}</tr>
+    <tr><th class="corner">坪數</th>{area_cells}</tr>
+  </thead>
   <tbody>
     {''.join(body_rows)}
   </tbody>
@@ -267,6 +292,15 @@ def main():
     HTML_OUT.parent.mkdir(parents=True, exist_ok=True)
     HTML_OUT.write_text(html, encoding="utf-8")
     print(f"parsed {len(records)} records -> {HTML_OUT}")
+
+    flagged = {
+        col: s for col, s in area_stats(records).items() if s["spread"] > AREA_SPREAD_TOLERANCE
+    }
+    if flagged:
+        print(f"\n坪數誤差超過 {AREA_SPREAD_TOLERANCE} 坪的戶別（標準坪數欄採眾數，最小值為準）：")
+        for col in sorted(flagged, key=column_sort_key):
+            s = flagged[col]
+            print(f"  {col}: 標準={s['standard']:.2f}坪，實際出現值={s['values']}，最大差距={s['spread']:.2f}坪")
 
 
 if __name__ == "__main__":

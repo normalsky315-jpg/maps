@@ -1,6 +1,6 @@
 """Shared page-geometry constants for generate_report.py and render_pdf.py."""
 
-ORIENTATION = "portrait"  # "portrait" or "landscape"
+ORIENTATION = "landscape"  # "portrait" or "landscape"
 
 _A3_LONG_MM, _A3_SHORT_MM = 420, 297
 if ORIENTATION == "portrait":
