@@ -34,7 +34,7 @@ FLOOR_MIN, FLOOR_MAX = 2, 20
 # page, however many rows/columns end up in the table.
 CONTENT_WIDTH_PX = 820
 ROW_HEIGHT_PX = 52
-THEAD_HEIGHT_PX = 40
+THEAD_HEIGHT_PX = 44
 
 TIER_HIGH = (70.0, float("inf"), "#fde3e0", "#c0392b", "70\n萬以上")
 TIER_MID = (65.0, 69.9999, "#fbe6cf", "#c07a1e", "65-\n69.99萬")
@@ -100,7 +100,18 @@ def build_html(records):
 
     update_month = date.today().strftime("%Y/%m")
 
-    head_cells = "".join(f"<th>{c}</th>" for c in columns)
+    # A unit column whose every transaction shares the same 坪數 gets that
+    # figure hoisted up into the column header (once) instead of repeated
+    # in every cell's footnote.
+    areas_by_col = {}
+    for r in records:
+        areas_by_col.setdefault(r["col"], set()).add(round(r["area"], 2))
+    fixed_area = {col: next(iter(areas)) for col, areas in areas_by_col.items() if len(areas) == 1}
+
+    head_cells = "".join(
+        f'<th>{c}<span class="col-area">{fixed_area[c]:.2f}坪</span></th>' if c in fixed_area else f"<th>{c}</th>"
+        for c in columns
+    )
 
     body_rows = []
     for floor in range(FLOOR_MAX, FLOOR_MIN - 1, -1):
@@ -112,11 +123,12 @@ def build_html(records):
                 continue
             bg, fg = tier_for(rec["unit_price"])
             parking = f'{rec["parking_price"]}萬' if rec["parking_price"] is not None else "無"
+            note = f"車{parking}" if col in fixed_area else f'{rec["area"]:.2f}坪/車{parking}'
             cells.append(
                 f'<td style="background:{bg};color:{fg};">'
                 f'<div class="price">{rec["total_price"]:,}萬</div>'
                 f'<div class="unitprice">{rec["unit_price"]:.2f}萬</div>'
-                f'<div class="note">{rec["area"]:.2f}坪/車{parking}</div>'
+                f'<div class="note">{note}</div>'
                 f"</td>"
             )
         body_rows.append(f'<tr><th class="floor">{floor}F</th>{"".join(cells)}</tr>')
@@ -203,6 +215,13 @@ def build_html(records):
     color: #ffffff;
     font-size: 10px;
     height: {THEAD_HEIGHT_PX}px;
+    line-height: 1.3;
+  }}
+  .col-area {{
+    display: block;
+    font-size: 7px;
+    font-weight: 400;
+    color: #a9b4c2;
   }}
   th.floor {{
     background: #24344a;
