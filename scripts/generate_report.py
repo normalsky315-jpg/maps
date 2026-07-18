@@ -129,7 +129,11 @@ def build_html(records):
     update_month = date.today().strftime("%Y/%m")
 
     head_cells = "".join(f"<th>{c}</th>" for c in columns)
-    area_cells = "".join(f'<th class="area-cell">{col_area[c]["standard"]:.2f}坪</th>' for c in columns)
+    area_cells = "".join(
+        f'<th class="area-cell{" area-flag" if col_area[c]["spread"] > AREA_SPREAD_TOLERANCE else ""}">'
+        f'{col_area[c]["standard"]:.2f}坪</th>'
+        for c in columns
+    )
 
     body_rows = []
     for floor in range(FLOOR_MAX, FLOOR_MIN - 1, -1):
@@ -239,6 +243,14 @@ def build_html(records):
     font-size: 10px;
     font-weight: 400;
     height: {AREA_ROW_HEIGHT_PX}px;
+  }}
+  /* Flags a column whose recorded 總面積 actually varies by more than
+     AREA_SPREAD_TOLERANCE — the 標準坪數 shown is only the mode, so this
+     calls out that it's not the whole story. */
+  th.area-flag {{
+    background: #5c2430;
+    color: #ff8a80;
+    font-weight: 700;
   }}
   th.corner {{
     background: #24344a;
