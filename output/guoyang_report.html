@@ -29,34 +29,34 @@
     transform-origin: top left;
   }
   h1 {
-    font-size: 22px;
-    margin: 0 0 2px;
+    font-size: 28px;
+    margin: 0 0 3px;
     text-align: center;
     letter-spacing: 1.5px;
   }
   .subtitle {
     text-align: center;
     color: #6b7684;
-    font-size: 9px;
-    margin-bottom: 10px;
+    font-size: 12px;
+    margin-bottom: 12px;
   }
   .stats {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 6px 14px;
+    gap: 8px 18px;
     background: #f4f6f8;
     border-radius: 8px;
-    padding: 8px 14px;
-    margin-bottom: 10px;
+    padding: 10px 16px;
+    margin-bottom: 12px;
   }
   .stat { text-align: left; }
-  .stat .label { font-size: 8px; color: #6b7684; }
-  .stat .value { font-size: 14px; font-weight: 700; color: #1c2733; }
+  .stat .label { font-size: 11px; color: #6b7684; }
+  .stat .value { font-size: 19px; font-weight: 700; color: #1c2733; }
   .stat .value.accent { color: #c0392b; }
-  .legend { display: flex; align-items: center; gap: 4px; font-size: 8px; color: #33475b; }
-  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-left: 6px; }
+  .legend { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #33475b; }
+  .swatch { display: inline-block; width: 13px; height: 13px; border-radius: 2px; margin-left: 7px; }
   .legend-label { white-space: pre-line; line-height: 1.05; }
   table {
     width: 100%;
@@ -71,15 +71,15 @@
   thead th {
     background: #24344a;
     color: #ffffff;
-    font-size: 12px;
-    height: 34px;
+    font-size: 16px;
+    height: 38px;
   }
   th.area-cell {
     background: #3a4c66;
     color: #cfd8e3;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 400;
-    height: 26px;
+    height: 30px;
   }
   /* Flags a column whose recorded 總面積 actually varies by more than
      AREA_SPREAD_TOLERANCE — the 標準坪數 shown is only the mode, so this
@@ -105,20 +105,22 @@
   th.corner {
     background: #24344a;
     color: #ffffff;
-    width: 46px;
+    width: 58px;
+    font-size: 11px;
+    line-height: 1.2;
   }
   th.floor {
     background: #24344a;
     color: #ffffff;
-    width: 46px;
-    font-size: 11px;
+    width: 58px;
+    font-size: 15px;
   }
   /* Every floor row and every cell in it shares the same explicit height,
      so the grid reads as a perfectly even set of boxes regardless of
      whether a cell has 3 lines of data or is empty. */
   tbody tr { height: 63px; }
   tbody td, tbody th.floor { height: 63px; vertical-align: middle; }
-  td.empty { color: #c3cad2; background: #fafbfc; font-size: 13px; }
+  td.empty { color: #c3cad2; background: #fafbfc; font-size: 15px; }
   td .price { font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }
   td .unitprice { font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }
   td .note { font-size: 15px; opacity: 0.85; white-space: nowrap; line-height: 1.25; }
@@ -140,7 +142,7 @@
 </div>
 <table>
   <thead>
-    <tr><th class="corner">樓層</th><th>A1</th><th>A2</th><th>A3</th><th>A5</th><th>A6</th><th>A7</th><th>A8</th><th>A9</th><th>A10</th><th>A11</th><th>A12</th><th>A13</th><th>A15</th><th>A16</th><th>B1</th><th>B2</th><th>B3</th><th>B5</th><th>B6</th><th>B7</th><th>B8</th><th>B9</th></tr>
+    <tr><th class="corner">戶別/樓層</th><th>A1</th><th>A2</th><th>A3</th><th>A5</th><th>A6</th><th>A7</th><th>A8</th><th>A9</th><th>A10</th><th>A11</th><th>A12</th><th>A13</th><th>A15</th><th>A16</th><th>B1</th><th>B2</th><th>B3</th><th>B5</th><th>B6</th><th>B7</th><th>B8</th><th>B9</th></tr>
     <tr><th class="corner">坪數</th><th class="area-cell area-spec">41-42.5坪</th><th class="area-cell area-spec">23.00坪</th><th class="area-cell area-spec">23.00坪</th><th class="area-cell area-spec">23.00坪</th><th class="area-cell area-spec">23.00坪</th><th class="area-cell area-spec">41-42.5坪</th><th class="area-cell">51.41坪</th><th class="area-cell area-flag">29.41坪</th><th class="area-cell">29.41坪</th><th class="area-cell area-spec">23.00坪</th><th class="area-cell area-flag">29.41坪</th><th class="area-cell">48.02坪</th><th class="area-cell">27.48坪</th><th class="area-cell area-flag">27.48坪</th><th class="area-cell">45.45坪</th><th class="area-cell area-spec">21.50坪</th><th class="area-cell area-spec">21.50坪</th><th class="area-cell area-spec">21.50坪</th><th class="area-cell">22.48坪</th><th class="area-cell">45.43坪</th><th class="area-cell area-spec">37.00坪</th><th class="area-cell">44.47坪</th></tr>
   </thead>
   <tbody>

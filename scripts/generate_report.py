@@ -57,8 +57,8 @@ SPEC_AREA = {
 # page, however many rows/columns end up in the table.
 CONTENT_WIDTH_PX = 1970
 ROW_HEIGHT_PX = 63
-THEAD_HEIGHT_PX = 34
-AREA_ROW_HEIGHT_PX = 26
+THEAD_HEIGHT_PX = 38
+AREA_ROW_HEIGHT_PX = 30
 
 # A unit column's 坪數 row shows its single most common (mode) 總面積.
 # Columns whose recorded area actually spreads by more than this get
@@ -226,34 +226,34 @@ def build_html(records):
     transform-origin: top left;
   }}
   h1 {{
-    font-size: 22px;
-    margin: 0 0 2px;
+    font-size: 28px;
+    margin: 0 0 3px;
     text-align: center;
     letter-spacing: 1.5px;
   }}
   .subtitle {{
     text-align: center;
     color: #6b7684;
-    font-size: 9px;
-    margin-bottom: 10px;
+    font-size: 12px;
+    margin-bottom: 12px;
   }}
   .stats {{
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 6px 14px;
+    gap: 8px 18px;
     background: #f4f6f8;
     border-radius: 8px;
-    padding: 8px 14px;
-    margin-bottom: 10px;
+    padding: 10px 16px;
+    margin-bottom: 12px;
   }}
   .stat {{ text-align: left; }}
-  .stat .label {{ font-size: 8px; color: #6b7684; }}
-  .stat .value {{ font-size: 14px; font-weight: 700; color: #1c2733; }}
+  .stat .label {{ font-size: 11px; color: #6b7684; }}
+  .stat .value {{ font-size: 19px; font-weight: 700; color: #1c2733; }}
   .stat .value.accent {{ color: #c0392b; }}
-  .legend {{ display: flex; align-items: center; gap: 4px; font-size: 8px; color: #33475b; }}
-  .swatch {{ display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-left: 6px; }}
+  .legend {{ display: flex; align-items: center; gap: 5px; font-size: 11px; color: #33475b; }}
+  .swatch {{ display: inline-block; width: 13px; height: 13px; border-radius: 2px; margin-left: 7px; }}
   .legend-label {{ white-space: pre-line; line-height: 1.05; }}
   table {{
     width: 100%;
@@ -268,13 +268,13 @@ def build_html(records):
   thead th {{
     background: #24344a;
     color: #ffffff;
-    font-size: 12px;
+    font-size: 16px;
     height: {THEAD_HEIGHT_PX}px;
   }}
   th.area-cell {{
     background: #3a4c66;
     color: #cfd8e3;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 400;
     height: {AREA_ROW_HEIGHT_PX}px;
   }}
@@ -302,20 +302,22 @@ def build_html(records):
   th.corner {{
     background: #24344a;
     color: #ffffff;
-    width: 46px;
+    width: 58px;
+    font-size: 11px;
+    line-height: 1.2;
   }}
   th.floor {{
     background: #24344a;
     color: #ffffff;
-    width: 46px;
-    font-size: 11px;
+    width: 58px;
+    font-size: 15px;
   }}
   /* Every floor row and every cell in it shares the same explicit height,
      so the grid reads as a perfectly even set of boxes regardless of
      whether a cell has 3 lines of data or is empty. */
   tbody tr {{ height: {ROW_HEIGHT_PX}px; }}
   tbody td, tbody th.floor {{ height: {ROW_HEIGHT_PX}px; vertical-align: middle; }}
-  td.empty {{ color: #c3cad2; background: #fafbfc; font-size: 13px; }}
+  td.empty {{ color: #c3cad2; background: #fafbfc; font-size: 15px; }}
   td .price {{ font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
   td .unitprice {{ font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
   td .note {{ font-size: 15px; opacity: 0.85; white-space: nowrap; line-height: 1.25; }}
@@ -334,7 +336,7 @@ def build_html(records):
 </div>
 <table>
   <thead>
-    <tr><th class="corner">樓層</th>{head_cells}</tr>
+    <tr><th class="corner">戶別/樓層</th>{head_cells}</tr>
     <tr><th class="corner">坪數</th>{area_cells}</tr>
   </thead>
   <tbody>
