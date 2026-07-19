@@ -37,17 +37,19 @@ FULL_UNITS = [
     "B1", "B2", "B3", "B5", "B6", "B7", "B8", "B9",
 ]
 
-# 從建案官方戶型規劃圖(FLOOR PLANNING)抄錄的標準坪數，只用來補「從未成交、
-# 實價登錄沒有任何紀錄」的戶別 —— 已有成交紀錄的戶別一律以 area_stats() 算出
-# 的實際登錄坪數為準（兩者基準可能不同：規劃圖坪數通常不含車位面積，登錄
-# 坪數則是該筆交易「房地+車位」的總面積，若有配車位通常會大個幾坪)。
-# A棟3R戶型（A1、A7）官方表僅標示「41-42.5坪」區間、圖上又只清楚標出角間
-# A8的42.5坪，A1/A7無法判斷是41或42.5哪一個，因此原樣保留區間文字。
+# 從建案官方戶型規劃圖(FLOOR PLANNING，含 A/B 兩棟合併的「標準層平面規劃」全區圖
+# 及各棟單獨的規劃圖)抄錄的標準坪數，只用來補「從未成交、實價登錄沒有任何
+# 紀錄」的戶別 —— 已有成交紀錄的戶別一律以 area_stats() 算出的實際登錄坪數
+# 為準（兩者基準可能不同：規劃圖坪數通常不含車位面積，登錄坪數則是該筆交易
+# 「房地+車位」的總面積，若有配車位通常會大個幾坪)。
+# 全區圖每個角間都個別標示坪數（A1/A7=41P、A8=42.5P、A13=41P；B1=39P、
+# B9=35P、B7=38P、B8=35P），解決了單棟規劃圖只給「41-42.5坪」區間、
+# 或四個角間統一標示「37P」的模糊之處。
 SPEC_AREA = {
     "A2": 23.00, "A3": 23.00, "A5": 23.00, "A6": 23.00, "A11": 23.00,  # 1+1R，圖上標示23P
-    "A1": "41-42.5", "A7": "41-42.5",  # 3R，區間無法細分至單一戶別
-    "B2": 21.50, "B3": 21.50, "B5": 21.50,  # 1+1R，圖上標示21.5P
-    "B8": 37.00,  # 3R，四個角間圖上均標示37P
+    "A1": 41.00, "A7": 41.00,  # 3R，全區圖角間各自標示41P
+    "B2": 21.50, "B3": 21.50, "B5": 21.50,  # 1+1R，單棟規劃圖標示21.5P
+    "B8": 35.00,  # 3R，全區圖角間標示35P
 }
 
 # #content has a fixed intrinsic design size (roughly matching the target
@@ -146,10 +148,8 @@ def area_cell_html(col, col_area):
         cls = "area-cell area-flag" if flagged else "area-cell"
         return f'<th class="{cls}">{col_area[col]["standard"]:.2f}坪</th>'
     spec = SPEC_AREA.get(col)
-    if isinstance(spec, float):
+    if spec is not None:
         return f'<th class="area-cell area-spec">{spec:.2f}坪</th>'
-    if isinstance(spec, str):
-        return f'<th class="area-cell area-spec">{spec}坪</th>'
     return '<th class="area-cell area-unsold">未成交</th>'
 
 
