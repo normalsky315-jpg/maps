@@ -318,7 +318,7 @@ def build_html(records):
   td.empty {{ color: #c3cad2; background: #fafbfc; font-size: 13px; }}
   td .price {{ font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
   td .unitprice {{ font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
-  td .note {{ font-size: 10px; opacity: 0.85; white-space: nowrap; line-height: 1.25; }}
+  td .note {{ font-size: 15px; opacity: 0.85; white-space: nowrap; line-height: 1.25; }}
   @page {{ size: A3 {ORIENTATION}; margin: {PAGE_MARGIN_MM}mm; }}
 </style>
 <div id="sheet"><div id="content">
