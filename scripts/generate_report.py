@@ -62,10 +62,17 @@ ROW_HEIGHT_PX = 63
 THEAD_HEIGHT_PX = 38
 AREA_ROW_HEIGHT_PX = 30
 
-# A unit column's 坪數 row shows its single most common (mode) 總面積.
+# A unit column's 坪數 row shows its single most common (mode) 淨房屋面積.
 # Columns whose recorded area actually spreads by more than this get
 # called out separately (see main()) instead of silently averaged away.
 AREA_SPREAD_TOLERANCE = 0.1
+
+# 統一車位坪數（見 parse_rows()），用來把「總面積」換算成不含車位的淨房屋面積。
+CAR_AREA_PING = 7.03
+
+# 上一版資料（28筆，最新交易日 115/05/30）之後新增的交易，交易日期晚於此即
+# 視為「本次新增」，在表上特別標色。之後再更新資料時記得把這個值往後移。
+NEW_SINCE_DATE = "115/05/30"
 
 TIER_HIGH = (70.0, float("inf"), "#fde3e0", "#c0392b", "70\n萬以上")
 TIER_MID = (65.0, 69.9999, "#fbe6cf", "#c07a1e", "65-\n69.99萬")
@@ -88,11 +95,18 @@ def parse_rows(xlsx_path: Path):
         fm = re.search(r"(\d+)\s*/\s*(\d+)", str(r[9]))
         floor = int(fm.group(1))
         total_price = int(r[4])
-        unit_price = float(r[5])
         area = float(r[6])
         parking_price = r[13]
         parking_price = int(parking_price) if parking_price not in (None, "") else None
         trade_date = str(r[3]).strip()
+        # 實價登錄匯出檔的「總面積」在有配車位的交易裡會把車位坪數併進去，
+        # 車位坪數本身則要另外點進明細頁才看得到。反推全社區32筆交易
+        # (car_area = area - (total_price-parking_price)/官方單價) 發現車位
+        # 坪數穩定落在 7.03-7.04坪，因此統一以 CAR_AREA_PING=7.03 計算「淨
+        # 房屋面積」，並據此重新算單價，讓同一戶別不會因為有沒有配車位/
+        # 車位大小而顯示出不存在的坪數落差。
+        net_area = round(area - CAR_AREA_PING, 2) if parking_price is not None else area
+        unit_price = round((total_price - parking_price) / net_area, 2) if parking_price is not None else round(total_price / area, 2)
         records.append(
             dict(
                 col=col,
@@ -100,6 +114,7 @@ def parse_rows(xlsx_path: Path):
                 total_price=total_price,
                 unit_price=unit_price,
                 area=area,
+                net_area=net_area,
                 parking_price=parking_price,
                 trade_date=trade_date,
             )
@@ -125,7 +140,7 @@ def area_stats(records):
     actually share one consistent 坪數."""
     by_col = {}
     for r in records:
-        by_col.setdefault(r["col"], []).append(round(r["area"], 2))
+        by_col.setdefault(r["col"], []).append(round(r["net_area"], 2))
     stats = {}
     for col, areas in by_col.items():
         counts = Counter(areas)
@@ -162,7 +177,7 @@ def build_html(records):
     max_price = max(r["unit_price"] for r in records)
     min_price = min(r["unit_price"] for r in records)
     avg_price = sum(r["unit_price"] for r in records) / count
-    avg_area = sum(r["area"] for r in records) / count
+    avg_area = sum(r["net_area"] for r in records) / count
 
     update_month = date.today().strftime("%Y/%m")
 
@@ -179,8 +194,10 @@ def build_html(records):
                 continue
             bg, fg = tier_for(rec["unit_price"])
             parking = f'車{rec["parking_price"]}萬' if rec["parking_price"] is not None else "車無"
+            is_new = rec["trade_date"] > NEW_SINCE_DATE
+            cls = ' class="new-deal"' if is_new else ""
             cells.append(
-                f'<td style="background:{bg};color:{fg};">'
+                f'<td{cls} style="background:{bg};color:{fg};">'
                 f'<div class="price">{rec["total_price"]:,}萬</div>'
                 f'<div class="unitprice">{rec["unit_price"]:.2f}萬</div>'
                 f'<div class="note">{parking}</div>'
@@ -254,6 +271,7 @@ def build_html(records):
   .stat .value.accent {{ color: #c0392b; }}
   .legend {{ display: flex; align-items: center; gap: 5px; font-size: 11px; color: #33475b; }}
   .swatch {{ display: inline-block; width: 13px; height: 13px; border-radius: 2px; margin-left: 7px; }}
+  .new-deal-swatch {{ background: #fbe9d0; box-shadow: inset 0 0 0 3px #16a34a; }}
   .legend-label {{ white-space: pre-line; line-height: 1.05; }}
   table {{
     width: 100%;
@@ -321,6 +339,10 @@ def build_html(records):
   td .price {{ font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
   td .unitprice {{ font-size: 15px; font-weight: 700; white-space: nowrap; line-height: 1.25; }}
   td .note {{ font-size: 15px; opacity: 0.85; white-space: nowrap; line-height: 1.25; }}
+  /* Transactions dated after NEW_SINCE_DATE — added since the last data
+     refresh — get a bright ring on top of their price-tier background so
+     they're easy to spot without hunting through every cell. */
+  td.new-deal {{ box-shadow: inset 0 0 0 3px #16a34a; }}
   @page {{ size: A3 {ORIENTATION}; margin: {PAGE_MARGIN_MM}mm; }}
 </style>
 <div id="sheet"><div id="content">
@@ -333,6 +355,7 @@ def build_html(records):
   <div class="stat"><div class="label">平均單價</div><div class="value">{avg_price:.2f} 萬/坪</div></div>
   <div class="stat"><div class="label">平均坪數</div><div class="value">{avg_area:.2f} 坪</div></div>
   <div class="legend">單價級距：{legend_swatches}</div>
+  <div class="legend"><span class="swatch new-deal-swatch"></span><span class="legend-label">本次新增交易</span></div>
 </div>
 <table>
   <thead>
